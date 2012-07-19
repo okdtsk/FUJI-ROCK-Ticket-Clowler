@@ -20,17 +20,21 @@ Stream APIだと日本語検索に何があるので苦肉の策です…
 使い方
 ------
 コマンドライン引数に応じてメールを送信します。
+
     # クロールのみ（メール送信なし）
     python search.py
     # 未実装；メール送信（標準）
     python search.py -d [send_addr]
     # メール送信（Gmail経由）
     python search.py -d [send_addr] -u [gmail_user] -p [gmail_pass]
+    
 
 動作環境
 --------
 以下のパッケージが必要です。
-+tweepy
+
++ tweepy
+
     pip install tweepy
 
 動作はMac OSX Lion、python2.7.3で確認しています。
