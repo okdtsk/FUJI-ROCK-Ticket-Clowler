@@ -6,6 +6,7 @@ import tweepy
 import time
 from datetime import timedelta,datetime
 from gmailsend import *
+import urllib
 import urllib2
 import json
 import webbrowser
@@ -31,17 +32,24 @@ def parse_options():
             dest='gmail_pw',
             default=None,
             help='Gmail password')
+    parser.add_option(
+            '-t','--text',
+            action='store',
+            dest='reply_text',
+            default='',
+            help='Reply text')
     (options, args) = parser.parse_args()
     return options
 
 class SearchWord(object):
-    def __init__(self, word, send_to, gmail_user, gmail_pw):
+    def __init__(self, word, options):
         self.api = tweepy.API()
         self.ids = []
         self.word = word
-        self.send_to = send_to
-        self.gmail_user = gmail_user
-        self.gmail_pw = gmail_pw
+        self.send_to = options.send_to
+        self.gmail_user = options.gmail_user
+        self.gmail_pw = options.gmail_pw
+        self.reply_text = options.reply_text
 
     def search(self, mail=None):
         ids_new = []
@@ -53,17 +61,18 @@ class SearchWord(object):
             print 'Can not get tweet from search api...'
             return -1
         for tweet in reversed(tweets):
-            if not self.find_in_text(tweet.text,['譲','通し','3日','３日','チケ']):
+            if not self.find_in_text(tweet.text,\
+                    ['余','あま','ゆず','譲','通し','3日','３日','チケ']):
                 continue
             ids_new.append(tweet.id_str)
             if not tweet.id_str in self.ids:
+                setattr(tweet, 'url', self.shorten_url(tweet))
                 new_tweets.append(tweet)
-                print '>',tweet.from_user
-                print '>',
+                print '>','@'+tweet.from_user,'  -  ',
                 print (tweet.created_at + timedelta(hours=9)).\
                         strftime('%Y-%m-%d %H:%M:%S')
-                print 
                 print tweet.text
+                print tweet.url
                 print '-'*50
         if new_tweets:
             print '   --> ','NEW TWEET FOUND!!'
@@ -78,6 +87,8 @@ class SearchWord(object):
                 strftime('%Y-%m-%d %H:%M:%S')
 
     def find_in_text(self, text, words):
+        if text.startswith('RT'):
+            return False
         for word in words:
             if text.find(word) != -1:
                 return True
@@ -91,9 +102,8 @@ class SearchWord(object):
             body+= '> @{0} :\n'.format(tweet.from_user)
             body+= '> {0}\n'.format((tweet.created_at+timedelta(hours=9)).\
                     strftime('%Y-%m-%d %H:%m:%d'))
-            url = self.shorten_url(tweet)
-            body+= url + '\n'
-            webbrowser.open(url)
+            body+= tweet.url + '\n'
+            webbrowser.open(tweet.url)
             body+= '---\n'
         body+= '\n'
         body+= '**********'
@@ -117,15 +127,16 @@ class SearchWord(object):
     
     def shorten_url(self, tweet):
         api_url = 'https://www.googleapis.com/urlshortener/v1/url'
-        origin_url = 'https://twitter.com/intent/tweet?in_reply_to='
-        origin_url+= tweet.id_str
+        origin_url = 'https://twitter.com/intent/tweet?'
+        origin_url+= 'in_reply_to=' + tweet.id_str
+        origin_url+= '&text=' + urllib.quote(self.reply_text)
         req = urllib2.Request(api_url, '{longUrl:"%s"}' % origin_url)
         req.add_header('Content-Type', 'application/json')
         result = urllib2.urlopen(req)
         return json.load(result).get('id')
 
 def make_word(word_list):
-    return ' OR '.join(word_list) + ' -RT'
+    return ' OR '.join(word_list)
 
 def sleep(n):
     for i in range(n):
@@ -150,8 +161,9 @@ if __name__ == '__main__':
         if opt.gmail_user and opt.gmail_pw:
             mail_type = 'gmail'
     
-    search1 = SearchWord(word1, opt.send_to, opt.gmail_user, opt.gmail_pw)
+    search1 = SearchWord(word1, opt)
     
     while True:
         search1.search(mail=mail_type)
         sleep(15)
+

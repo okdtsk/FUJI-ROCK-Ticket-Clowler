@@ -28,6 +28,9 @@ Stream APIだと日本語検索に何があるので苦肉の策です…
     # メール送信（Gmail経由）
     python search.py -d [send_addr] -u [gmail_user] -p [gmail_pass]
     
+    # Twitterのリプライ定型文
+    python search.py -t チケットくださいな！
+    
 
 動作環境
 --------
