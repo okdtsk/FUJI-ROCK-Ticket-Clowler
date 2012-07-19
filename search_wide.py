@@ -53,6 +53,8 @@ class SearchWord(object):
             print 'Can not get tweet from search api...'
             return -1
         for tweet in reversed(tweets):
+            if not self.find_in_text(tweet.text,['譲','通し','3日','３日','チケ']):
+                continue
             ids_new.append(tweet.id_str)
             if not tweet.id_str in self.ids:
                 new_tweets.append(tweet)
@@ -63,7 +65,7 @@ class SearchWord(object):
                 print 
                 print tweet.text
                 print '-'*50
-        if new_tweets and self.ids:
+        if new_tweets:
             print '   --> ','NEW TWEET FOUND!!'
             if mail:
                 self.send_mail(new_tweets, mail_type=mail)
@@ -74,6 +76,12 @@ class SearchWord(object):
         print 'reset_time',
         print datetime.fromtimestamp(limit['reset_time_in_seconds']).\
                 strftime('%Y-%m-%d %H:%M:%S')
+
+    def find_in_text(self, text, words):
+        for word in words:
+            if text.find(word) != -1:
+                return True
+        return False
 
     def send_mail(self, tweets, mail_type):
         title = 'New Tweets fuji!'
@@ -132,8 +140,7 @@ def sleep(n):
     print 
 
 if __name__ == '__main__':    
-    word1 = make_word(['フジ 通し','フジ ３日'])
-    word2 = make_word(['fuji 通し'])
+    word1 = make_word(['フジ','fuji'])
 
     opt = parse_options()
     
@@ -144,10 +151,7 @@ if __name__ == '__main__':
             mail_type = 'gmail'
     
     search1 = SearchWord(word1, opt.send_to, opt.gmail_user, opt.gmail_pw)
-    search2 = SearchWord(word2, opt.send_to, opt.gmail_user, opt.gmail_pw)
     
     while True:
         search1.search(mail=mail_type)
-        sleep(15)
-        search2.search(mail=mail_type)
         sleep(15)
