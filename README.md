@@ -31,6 +31,8 @@ Stream APIだと日本語検索に何があるので苦肉の策です…
     # Twitterのリプライ定型文
     python search.py -t チケットくださいな！
     
+    # 新しいTweetが見つかったらブラウザで開く
+    python search.py -b
 
 動作環境
 --------
