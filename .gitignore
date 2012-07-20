@@ -1,3 +1,8 @@
+
+# User
+*.sh
+nohup.out
+
 *.py[co]
 
 # Packages
