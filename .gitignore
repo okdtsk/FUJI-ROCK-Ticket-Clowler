@@ -2,6 +2,7 @@
 # User
 *.sh
 nohup.out
+*.swp
 
 *.py[co]
 
